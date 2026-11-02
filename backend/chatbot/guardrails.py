@@ -30,7 +30,7 @@ from ..utils.llm_gateway import (
 guardrail_client = (
     AsyncOpenAI(api_key=PORTKEY_API_KEY, base_url=PORTKEY_BASE_URL)
     if is_portkey_configured()
-    else AsyncGroq(api_key=settings.groq_api_key)
+    else AsyncGroq(api_key=settings.groq_api_key, max_retries=0, timeout=3.0)
 )
 
 # Overridable via GUARD_MODEL_NAME / PROMPT_GUARD_MODEL_NAME without touching code.
@@ -132,15 +132,16 @@ Respond with only the JSON object described above.
 
 async def is_prompt_injection(user_message: str) -> bool:
     """True if Llama Prompt Guard 2 flags this as an injection/jailbreak attempt."""
-    response = await guardrail_client.chat.completions.create(
-        model=resolve_model_name(PROMPT_GUARD_MODEL_NAME),
-        messages=[{"role": "user", "content": user_message}],
-    )
     try:
+        response = await guardrail_client.chat.completions.create(
+            model=resolve_model_name(PROMPT_GUARD_MODEL_NAME),
+            messages=[{"role": "user", "content": user_message}],
+            max_tokens=10,
+        )
         score = float(response.choices[0].message.content.strip())
-    except (TypeError, ValueError):
+        return score >= PROMPT_INJECTION_THRESHOLD
+    except Exception:
         return False
-    return score >= PROMPT_INJECTION_THRESHOLD
 
 
 async def _check_safety(text: str, policy: str) -> tuple[bool, str]:
@@ -148,21 +149,23 @@ async def _check_safety(text: str, policy: str) -> tuple[bool, str]:
     Shared gpt-oss-safeguard-20b call used for both input and output checks.
     Returns (is_unsafe, rationale).
     """
-    response = await guardrail_client.chat.completions.create(
-        model=resolve_model_name(GUARD_MODEL_NAME),
-        messages=[
-            {"role": "system", "content": policy},
-            {"role": "user", "content": text},
-        ],
-        reasoning_effort="low",
-    )
-    raw = (response.choices[0].message.content or "").strip()
-    raw = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
     try:
+        response = await guardrail_client.chat.completions.create(
+            model=resolve_model_name(GUARD_MODEL_NAME),
+            messages=[
+                {"role": "system", "content": policy},
+                {"role": "user", "content": text},
+            ],
+            reasoning_effort="low",
+            max_tokens=60,
+        )
+        raw = (response.choices[0].message.content or "").strip()
+        raw = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
         verdict = json.loads(raw)
-    except ValueError:
+        return bool(verdict.get("violation")), verdict.get("rationale", "")
+    except Exception as e:
+        logfire.warn("Guardrail safety check failed open: {error}", error=str(e))
         return False, ""
-    return bool(verdict.get("violation")), verdict.get("rationale", "")
 
 
 async def violates_content_policy(user_message: str) -> bool:

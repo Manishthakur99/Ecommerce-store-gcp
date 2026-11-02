@@ -101,16 +101,35 @@ def get_product_image(id: str):
     responses can link to this instead of embedding the base64 bytes inline.
     """
     product = products_collection.find_one(
-        {"_id": _object_id(id)}, {"image_data": 1, "image_content_type": 1}
+        {"_id": _object_id(id)}, {"image_data": 1, "image_content_type": 1, "image": 1}
     )
-    if not product or not product.get("image_data"):
-        raise HTTPException(status_code=404, detail="Image not found")
-    image_bytes = base64.b64decode(product["image_data"])
-    return Response(
-        content=image_bytes,
-        media_type=product.get("image_content_type") or "image/jpeg",
-        headers={"Cache-Control": "public, max-age=86400"},
-    )
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    # Format 1: BSON dict {'data': bytes, 'content_type': str}
+    if isinstance(product.get("image"), dict) and product["image"].get("data"):
+        raw_data = product["image"]["data"]
+        content_type = product["image"].get("content_type") or "image/jpeg"
+        if isinstance(raw_data, str):
+            image_bytes = base64.b64decode(raw_data)
+        else:
+            image_bytes = bytes(raw_data)
+        return Response(
+            content=image_bytes,
+            media_type=content_type,
+            headers={"Cache-Control": "public, max-age=86400"},
+        )
+
+    # Format 2: Base64 string in image_data
+    if product.get("image_data"):
+        image_bytes = base64.b64decode(product["image_data"])
+        return Response(
+            content=image_bytes,
+            media_type=product.get("image_content_type") or "image/jpeg",
+            headers={"Cache-Control": "public, max-age=86400"},
+        )
+
+    raise HTTPException(status_code=404, detail="Image not found")
 
 
 @write_router.delete("")

@@ -14,7 +14,7 @@ MONGO_URI = settings.mongo_uri
 
 # MongoClient does not connect until the first operation, so this is import-safe.
 client = MongoClient(MONGO_URI)
-db = client["ecommerce_db"]
+db = client.get_default_database("ecommerce_db")
 
 users_collection = db["users"]
 products_collection = db["products"]
