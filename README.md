@@ -67,10 +67,10 @@ flowchart TB
             AUTH["Auth & Google OAuth"]
         end
         
-        subgraph AIServices["Hardened AI Engine (`backend/chatbot/`)"]
+        subgraph AIServices["Hardened AI Engine (backend/chatbot/)"]
             IGUARD["Input Guardrails<br/>• Prompt Guard 2 (86M)<br/>• Content Safety (20B)"]
             AGENT["Pydantic AI Agent<br/>(LLM: gpt-oss-20b)"]
-            TOOL["`search_products` Tool"]
+            TOOL["search_products Tool"]
             OGUARD["Output Guardrail<br/>• Response Policy (20B)"]
         end
     end
@@ -107,7 +107,7 @@ When a shopper sends a prompt via the conversational interface, the request exec
 sequenceDiagram
     autonumber
     actor Shopper as 🧑 Shopper
-    participant API as 🚀 FastAPI (`/chat`)
+    participant API as 🚀 FastAPI (/chat)
     participant Guard as 🛡️ Guardrail Engine
     participant Agent as 🤖 Pydantic AI Agent
     participant DB as 🍃 MongoDB Atlas
@@ -121,7 +121,7 @@ sequenceDiagram
     else Benign Query
         Guard-->>Agent: Forward User Message
         Agent->>Agent: Parse query intent into structured filter
-        Agent->>DB: Execute `search_products(category, max_price, query)`
+        Agent->>DB: Execute search_products(category, max_price, query)
         DB-->>Agent: Return matching product documents
         Agent->>Agent: Format structured recommendation
         Agent->>Guard: Screen outbound agent response
