@@ -8,8 +8,15 @@
 [![Google Cloud Run](https://img.shields.io/badge/Google_Cloud_Run-Serverless_Container-4285F4?style=flat&logo=googlecloud&logoColor=white)](https://cloud.google.com/run)
 [![Logfire](https://img.shields.io/badge/Pydantic_Logfire-Observability_%26_Evals-18181B?style=flat)](https://logfire.pydantic.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Render-46E3B7?style=flat&logo=render&logoColor=white)](https://ecommerce-store-gcp.onrender.com)
 
 An enterprise-ready, full-stack e-commerce platform paired with an in-context **AI Shopping Assistant**. Built with a zero-build vanilla JavaScript storefront, a high-throughput FastAPI backend, MongoDB Atlas, and a hardened Pydantic AI agent running high-speed inference on Groq with multi-tier guardrails, continuous live evals, and full OpenTelemetry distributed tracing.
+
+### 🔗 Live Demo
+
+🚀 **Production deployment is live at:** [https://ecommerce-store-gcp.onrender.com](https://ecommerce-store-gcp.onrender.com)
+
+Browse the catalog, add items to the cart, and chat with the AI Shopping Assistant directly on the deployed storefront.
 
 ---
 
